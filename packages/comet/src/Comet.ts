@@ -1,7 +1,7 @@
 import { Client } from "discord.js";
 import WebSocket from "ws";
 
-import DualSet from "./DualSet.js";
+import { DualSet } from "@botcomet/protocol";
 
 const STATION_ADDRESS = "ws://localhost:8080";
 
