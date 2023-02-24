@@ -1,9 +1,10 @@
 {
   "name": "@botcomet/protocol",
-  "private": true,
   "version": "0.0.1",
+  "type": "module",
   "description": "The BotComet protocol types and functions",
-  "main": "index.js",
+  "module": "dist/index.js",
+  "types": "dist/index.d.ts",
   "scripts": {
     "build": "tsc"
   },

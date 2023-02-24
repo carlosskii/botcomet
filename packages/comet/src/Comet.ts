@@ -1,7 +1,7 @@
 import { Client } from "discord.js";
 import WebSocket from "ws";
 
-import { DualSet } from "@botcomet/protocol";
+import { DualSet, Message } from "@botcomet/protocol";
 
 const STATION_ADDRESS = "ws://localhost:8080";
 
@@ -57,7 +57,7 @@ class Comet {
     console.log(message);
   }
 
-  private SendStationMessage(message: any) {
+  private SendStationMessage(message: Message) {
     if (this.station_conn) {
       this.station_conn.send(JSON.stringify(message));
     }
