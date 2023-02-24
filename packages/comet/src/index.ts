@@ -1,5 +1,5 @@
-import Comet from './Comet.js';
-import { config } from 'dotenv';
+import Comet from "./Comet.js";
+import { config } from "dotenv";
 
 config();
 

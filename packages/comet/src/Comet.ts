@@ -53,7 +53,7 @@ class Comet {
     });
   }
 
-  private EvaluateStationMessage(message: any) {
+  private EvaluateStationMessage(message: Message) {
     console.log(message);
   }
 
@@ -66,6 +66,6 @@ class Comet {
   private get next_obfuscated_id(): string {
     return Math.random().toString(36).substring(2);
   }
-};
+}
 
 export default Comet;

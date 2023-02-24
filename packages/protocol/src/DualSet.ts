@@ -3,7 +3,7 @@ interface DualSetItem<T, U> {
   first: T;
   second: U;
   lifetime?: number;
-};
+}
 
 
 class DualSet<T, U> {
