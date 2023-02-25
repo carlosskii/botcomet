@@ -9,6 +9,8 @@ class Comet {
   private client: Client;
   private station_conn: WebSocket | null = null;
 
+  // Sets of obfuscated IDs. Only the comet knows what
+  // the real IDs are.
   private station_guilds: DualSet<string, string> = new DualSet();
   private station_channels: DualSet<string, string> = new DualSet();
   private station_users: DualSet<string, string> = new DualSet();
@@ -20,6 +22,8 @@ class Comet {
     });
   }
 
+  // Starts the comet. This will connect to Discord and
+  // the station.
   public async Start(token: string) {
     this.client.on("ready", () => {
       console.log("Ready!");
@@ -42,6 +46,7 @@ class Comet {
     this.client.login(token);
   }
 
+  // Begins the connection to the station.
   private BeginStationConnection() {
     this.station_conn = new WebSocket(STATION_ADDRESS);
     this.station_conn.on("open", () => {
@@ -64,10 +69,12 @@ class Comet {
     });
   }
 
+  // Evaluates a message from the station.
   private EvaluateStationMessage(message: Message) {
     console.log(message);
   }
 
+  // Sends a message to the station.
   private SendStationMessage(message: Message) {
     if (this.station_conn) {
       this.station_conn.send(JSON.stringify(message));
