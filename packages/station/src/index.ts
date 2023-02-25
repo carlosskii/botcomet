@@ -1,1 +1,1 @@
-export { default as Station } from "./Station";
+export { default as Station } from "./Station.js";

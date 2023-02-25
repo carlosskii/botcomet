@@ -76,9 +76,7 @@ class Comet {
 
   // Sends a message to the station.
   private SendStationMessage(message: Message) {
-    if (this.station_conn) {
-      this.station_conn.send(JSON.stringify(message));
-    }
+    this.station_conn?.send(JSON.stringify(message));
   }
 }
 
