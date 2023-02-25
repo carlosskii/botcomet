@@ -1,6 +1,10 @@
 
+type MessageType = 
+  "comet_connect" | "plugin_connect";
+
 interface Message {
-  type: string;
+  type: MessageType;
+  destination: string;
   data: any;
 }
 

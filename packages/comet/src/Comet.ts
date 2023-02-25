@@ -1,7 +1,7 @@
 import { Client } from "discord.js";
 import WebSocket from "ws";
 
-import { DualSet, Message } from "@botcomet/protocol";
+import { DualSet, Message, next_obfuscated_id } from "@botcomet/protocol";
 
 const STATION_ADDRESS = "ws://localhost:8080";
 
@@ -27,10 +27,11 @@ class Comet {
     });
 
     this.client.on("messageCreate", async (message) => {
-      const obfuscated_id = this.next_obfuscated_id;
+      const obfuscated_id = next_obfuscated_id();
       this.station_messages.Set(obfuscated_id, message.id);
       this.SendStationMessage({
         type: "message_create",
+        destination: "STATION",
         data: {
           id: obfuscated_id,
           content: message.content
@@ -47,9 +48,19 @@ class Comet {
       console.log("Connected to station!");
     });
 
+    this.station_conn.on("close", () => {
+      console.log("Disconnected from station!");
+    });
+
     this.station_conn.on("message", (data) => {
       const message = JSON.parse(data.toString());
       this.EvaluateStationMessage(message);
+    });
+
+    this.SendStationMessage({
+      type: "comet_connect",
+      destination: "STATION",
+      data: {}
     });
   }
 
@@ -61,10 +72,6 @@ class Comet {
     if (this.station_conn) {
       this.station_conn.send(JSON.stringify(message));
     }
-  }
-
-  private get next_obfuscated_id(): string {
-    return Math.random().toString(36).substring(2);
   }
 }
 
