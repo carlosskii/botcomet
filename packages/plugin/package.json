@@ -17,6 +17,7 @@
     "typescript": "^4.9.5"
   },
   "dependencies": {
+    "@botcomet/auth": "^0.0.1",
     "@botcomet/protocol": "^0.0.1",
     "ws": "^8.12.1"
   }
