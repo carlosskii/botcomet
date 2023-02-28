@@ -5,7 +5,9 @@ type MessageType =
 
 interface Message {
   type: MessageType;
-  destination: string;
+  src: string;
+  dst: string;
+  context: string;
   data: any;
 }
 

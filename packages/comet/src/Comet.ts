@@ -39,7 +39,9 @@ class Comet {
       this.station_messages.Set(obfuscated_id, message.id);
       this.sendStationMessage({
         type: "message_create",
-        destination: "STATION",
+        dst: "STATION",
+        src: "COMET",
+        context: "CONTEXT",
         data: {
           id: obfuscated_id,
           content: message.content
@@ -68,7 +70,9 @@ class Comet {
 
     this.sendStationMessage({
       type: "comet_connect",
-      destination: "STATION",
+      dst: "STATION",
+      src: "COMET",
+      context: "CONTEXT",
       data: {}
     });
   }

@@ -22,7 +22,9 @@ class Plugin {
   private onOpen() {
     this.sendStationMessage({
       type: "plugin_connect",
-      destination: "STATION",
+      dst: "STATION",
+      src: "PLUGIN",
+      context: "CONTEXT",
       data: {}
     });
   }
@@ -41,7 +43,9 @@ class Plugin {
 
       this.sendStationMessage({
         type: "plugin_verify_response",
-        destination: "STATION",
+        dst: "STATION",
+        src: "PLUGIN",
+        context: "CONTEXT",
         data: { challenge }
       });
 
