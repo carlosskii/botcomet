@@ -1,11 +1,18 @@
 import WebSocket from "ws";
 
-import { Message } from "@botcomet/protocol";
+import {
+  Message,
+  Context, ContextCache,
+  next_obfuscated_id
+} from "@botcomet/protocol";
 import { Certificate } from "@botcomet/auth";
 
 const STATION_ADDRESS = "ws://localhost:8080";
 
 class Plugin {
+  private client_id = "";
+  private message_context: ContextCache = new Map();
+
   private station_conn: WebSocket | null = null;
   private certificate: Certificate | null = null;
 
@@ -20,11 +27,17 @@ class Plugin {
   }
 
   private onOpen() {
+    const context_id = next_obfuscated_id();
+    this.message_context.set(context_id, {
+      type: "plugin_connect",
+      data: {}
+    });
+
     this.sendStationMessage({
       type: "plugin_connect",
       dst: "STATION",
-      src: "PLUGIN",
-      context: "CONTEXT",
+      src: "CONNECTION",
+      context: context_id,
       data: {}
     });
   }
@@ -48,9 +61,24 @@ class Plugin {
         context: "CONTEXT",
         data: { challenge }
       });
+    } break;
 
-      break;
-    }
+    case "plugin_connect_response": {
+      if (!this.message_context.has(data.context)) {
+        console.error("Plugin connect response context not found!");
+        return;
+      }
+
+      const context = this.message_context.get(data.context)!;
+      if (context.type !== "plugin_connect") {
+        console.error("Plugin connect response context type mismatch!");
+        return;
+      }
+
+      this.message_context.delete(data.context);
+      this.client_id = data.data.client_id;
+    } break;
+
     default:
       console.error("Unknown message type: " + data.type);
 
