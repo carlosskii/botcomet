@@ -6,7 +6,9 @@
   "description": "BotComet's Comet implementation",
   "main": "index.js",
   "scripts": {
-    "build": "tsc"
+    "build": "tsc",
+    "lint": "eslint src --ext .ts",
+    "test:ts": "tsc --noEmit"
   },
   "keywords": [],
   "author": "The BotComet Team",
