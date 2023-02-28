@@ -1,13 +1,18 @@
 import { Client } from "discord.js";
 import WebSocket from "ws";
 
-import { DualSet, Message, next_obfuscated_id } from "@botcomet/protocol";
+import {
+  DualSet, Message,
+  Context, ContextCache,
+  next_obfuscated_id
+} from "@botcomet/protocol";
 import { Padlock } from "@botcomet/auth";
 
 const STATION_ADDRESS = "ws://localhost:8080";
 
 class Comet {
   private client: Client;
+  private client_id = "";
   private station_conn: WebSocket | null = null;
 
   // Sets of obfuscated IDs. Only the comet knows what
@@ -16,6 +21,8 @@ class Comet {
   private station_channels: DualSet<string, string> = new DualSet();
   private station_users: DualSet<string, string> = new DualSet();
   private station_messages: DualSet<string, string> = new DualSet();
+
+  private message_context: ContextCache = new Map();
 
   // Padlocks used to verify plugins.
   private padlocks: Map<string, Padlock> = new Map();
@@ -39,7 +46,9 @@ class Comet {
       this.station_messages.Set(obfuscated_id, message.id);
       this.sendStationMessage({
         type: "message_create",
-        destination: "STATION",
+        dst: "STATION",
+        src: this.client_id,
+        context: "CONTEXT",
         data: {
           id: obfuscated_id,
           content: message.content
@@ -66,16 +75,42 @@ class Comet {
       this.evaluateStationMessage(message);
     });
 
+    const context_id = next_obfuscated_id();
+    this.message_context.set(context_id, {
+      type: "comet_connect",
+      data: {}
+    });
+
     this.sendStationMessage({
       type: "comet_connect",
-      destination: "STATION",
+      dst: "STATION",
+      src: "CONNECTION",
+      context: context_id,
       data: {}
     });
   }
 
   // Evaluates a message from the station.
   private evaluateStationMessage(message: Message) {
-    console.log(message);
+    switch (message.type) {
+
+    case "comet_connect_response": {
+      if (!this.message_context.has(message.context)) {
+        console.error("Comet connect response context not found!");
+        return;
+      }
+
+      const context = this.message_context.get(message.context)!;
+      if (context.type !== "comet_connect") {
+        console.error("Comet connect response context type mismatch!");
+        return;
+      }
+
+      this.message_context.delete(message.context);
+      this.client_id = message.dst;
+    } break;
+
+    }
   }
 
   // Sends a message to the station.

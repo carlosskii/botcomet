@@ -36,12 +36,31 @@ class Station {
   private onMessage(message: string, ws: WebSocket) {
     const msg: Message = JSON.parse(message);
     switch (msg.type) {
-    case "comet_connect":
-      this.comets.Set(ws, next_obfuscated_id());
-      break;
-    case "plugin_connect":
-      this.plugins.Set(ws, next_obfuscated_id());
-      break;
+
+    case "comet_connect": {
+      const comet_id = next_obfuscated_id();
+      this.comets.Set(ws, comet_id);
+      ws.send(JSON.stringify({
+        type: "comet_connect_response",
+        dst: comet_id,
+        src: "STATION",
+        context: msg.context,
+        data: {}
+      }));
+    } break;
+
+    case "plugin_connect": {
+      const plugin_id = next_obfuscated_id();
+      this.plugins.Set(ws, plugin_id);
+      ws.send(JSON.stringify({
+        type: "plugin_connect_response",
+        dst: plugin_id,
+        src: "STATION",
+        context: msg.context,
+        data: {}
+      }));
+    } break;
+
     default:
       // Error
       break;

@@ -4,4 +4,4 @@ import { config } from "dotenv";
 config();
 
 const comet = new Comet();
-comet.Start(process.env.TOKEN!);
+comet.start(process.env.TOKEN!);
