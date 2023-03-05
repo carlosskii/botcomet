@@ -7,30 +7,53 @@ import {
 } from "@botcomet/protocol";
 import { Certificate } from "@botcomet/auth";
 
+// TODO: Add a config file for the station address.
 const STATION_ADDRESS = "ws://localhost:8080";
 
+/**
+ * Plugins handle all functionality for comets. They
+ * receive events from the bot, and emit commands for
+ * the bot to execute. Plugins are loaded by the station
+ * on connection, but are not verified by the station
+ * itself. Comets handle all verification of plugins.
+ */
 class Plugin {
+  // The client ID from the station
   private client_id = "";
-  private address = "";
+  // The plugin address (see @botcomet/auth - Certificate)
+  private address: string;
+  // The context cache for messages. This holds persistent
+  // data between messages, and is used to relate messages
+  // to one another.
   private message_context: ContextCache = new Map();
 
   private station_conn: WebSocket | null = null;
-  private certificate: Certificate | null = null;
+  private certificate: Certificate;
 
-  public Start() {
+  /**
+   * @param publicKey The public key as a PEM string (see \@botcomet/auth - Certificate)
+   * @param privateKey The private key as a PEM string (see \@botcomet/auth - Certificate)
+   */
+  constructor(publicKey: string, privateKey: string) {
+    this.certificate = new Certificate(publicKey, privateKey);
+    this.address = this.certificate.address;
+  }
+
+  /**
+   * Starts the plugin. This will connect to the station,
+   * and begin listening for messages on the station.
+   */
+  public start() {
     this.station_conn = new WebSocket(STATION_ADDRESS);
     this.station_conn.on("open", this.onOpen);
     this.station_conn.on("message", (data) => this.onMessage(JSON.parse(data.toString())));
   }
 
-  public loadCertificate(rsa_public: string, rsa_private: string) {
-    this.certificate = new Certificate(rsa_public, rsa_private);
-    this.address = this.certificate.address;
-  }
-
   private onOpen() {
     if (!this.certificate) {
-      throw new Error("No certificate loaded!");
+      // The certificate is initialized in the constructor,
+      // so this should never happen.
+      throw new Error("No certificate loaded! [IMPOSSIBLE ERROR]");
     }
 
     const context_id = next_obfuscated_id();
@@ -64,8 +87,8 @@ class Plugin {
 
       this.sendStationMessage({
         type: "plugin_verify_response",
-        dst: "STATION",
-        src: "PLUGIN",
+        dst: data.src,
+        src: data.dst,
         context: "CONTEXT",
         data: { challenge }
       });

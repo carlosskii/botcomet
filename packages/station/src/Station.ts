@@ -2,7 +2,11 @@ import WebSocket, { WebSocketServer } from "ws";
 
 import { Message, DualSet, next_obfuscated_id } from "@botcomet/protocol";
 
-
+/**
+ * The station handles all traffic between comets
+ * and plugins. It handles mesasge routing and
+ * client ID assignment.
+ */
 class Station {
   private readonly wss: WebSocketServer;
 
