@@ -1,0 +1,33 @@
+
+name: Node.js CI
+
+on:
+  commit:
+    branches: [ "master" ]
+
+
+jobs:
+  package_tests:
+
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [14.x, 16.x]
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+    - name: Use Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v3
+      with:
+        node-version: ${{ matrix.node-version }}
+        cache: 'npm'
+    - name: Run CI
+      run: npm ci
+    - name: Run lint tests
+      run: lerna run lint
+    - name: Run typescript check
+      run: lerna run test:ts
+    - name: Attempt build
+      run: lerna run build
