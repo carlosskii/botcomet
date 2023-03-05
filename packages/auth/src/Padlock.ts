@@ -1,39 +1,34 @@
-import fetch from "node-fetch";
 import NodeRSA from "node-rsa";
+import { createHash } from "crypto";
 
-const getDestinationFromAuthority = (authority: string) => {
-  const [host, plugin] = authority.split("/");
-  const plugin_parsed = plugin.split(".").reverse().join("/");
-  return `https://bcauth.${host}/${plugin_parsed}`;
-};
 
 class Padlock {
-  private authority: string;
-  private publicKey: NodeRSA | null = null;
+  private publicKey: NodeRSA;
+  private _address: string | null = null;
   private lastChallenge: string | null = null;
 
-  constructor(authority: string) {
-    this.authority = authority;
+  constructor(publicKey: string) {
+    this.publicKey = new NodeRSA(publicKey);
+
+    const hash = createHash("sha256");
+    hash.update(publicKey);
+
+    this._address = hash.digest("hex");
   }
 
-  public async getPublicKey(): Promise<NodeRSA> {
-    if (this.publicKey) return this.publicKey;
-    const response = await fetch(getDestinationFromAuthority(this.authority));
-    const key = await response.text();
-    this.publicKey = new NodeRSA(key);
-    return this.publicKey;
+  public get address(): string {
+    if (!this._address) throw new Error("Address not set");
+    return this._address;
   }
 
-  public async lock(data: string): Promise<string> {
-    const key = await this.getPublicKey();
+  public lock(data: string): string {
     this.lastChallenge = data;
-    return key.encrypt(data, "base64");
+    return this.publicKey.encrypt(data, "base64");
   }
 
-  public async verify(unlock: string): Promise<boolean> {
+  public verify(unlock: string): boolean {
     if (!this.lastChallenge) return false;
-    const key = await this.getPublicKey();
-    return key.decrypt(unlock, "utf8") === this.lastChallenge;
+    return this.publicKey.decrypt(unlock, "utf8") === this.lastChallenge;
   }
 
 }

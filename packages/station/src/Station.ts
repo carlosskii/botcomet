@@ -11,6 +11,7 @@ class Station {
   // for routing.
   private comets: DualSet<WebSocket, string> = new DualSet();
   private plugins: DualSet<WebSocket, string> = new DualSet();
+  private plugin_addresses: DualSet<string, string> = new DualSet();
 
   constructor() {
     this.wss = new WebSocketServer({ port: 8080 });
@@ -51,7 +52,10 @@ class Station {
 
     case "plugin_connect": {
       const plugin_id = next_obfuscated_id();
+
       this.plugins.Set(ws, plugin_id);
+      this.plugin_addresses.Set(msg.data.address, plugin_id);
+
       ws.send(JSON.stringify({
         type: "plugin_connect_response",
         dst: plugin_id,

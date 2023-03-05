@@ -1,6 +1,7 @@
+import type { MessageType } from "./Message.js";
 
 interface Context {
-  type: string;
+  type: MessageType;
   data: any;
 }
 

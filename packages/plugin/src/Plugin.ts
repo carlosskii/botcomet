@@ -2,7 +2,7 @@ import WebSocket from "ws";
 
 import {
   Message,
-  Context, ContextCache,
+  ContextCache,
   next_obfuscated_id
 } from "@botcomet/protocol";
 import { Certificate } from "@botcomet/auth";
@@ -11,6 +11,7 @@ const STATION_ADDRESS = "ws://localhost:8080";
 
 class Plugin {
   private client_id = "";
+  private address = "";
   private message_context: ContextCache = new Map();
 
   private station_conn: WebSocket | null = null;
@@ -22,11 +23,16 @@ class Plugin {
     this.station_conn.on("message", (data) => this.onMessage(JSON.parse(data.toString())));
   }
 
-  public loadCertificate(rsa_private: string) {
-    this.certificate = new Certificate(rsa_private);
+  public loadCertificate(rsa_public: string, rsa_private: string) {
+    this.certificate = new Certificate(rsa_public, rsa_private);
+    this.address = this.certificate.address;
   }
 
   private onOpen() {
+    if (!this.certificate) {
+      throw new Error("No certificate loaded!");
+    }
+
     const context_id = next_obfuscated_id();
     this.message_context.set(context_id, {
       type: "plugin_connect",
@@ -38,7 +44,9 @@ class Plugin {
       dst: "STATION",
       src: "CONNECTION",
       context: context_id,
-      data: {}
+      data: {
+        address: this.address
+      }
     });
   }
 

@@ -3,7 +3,7 @@ import WebSocket from "ws";
 
 import {
   DualSet, Message,
-  Context, ContextCache,
+  ContextCache,
   next_obfuscated_id
 } from "@botcomet/protocol";
 import { Padlock } from "@botcomet/auth";
@@ -118,25 +118,32 @@ class Comet {
     this.station_conn?.send(JSON.stringify(message));
   }
 
-  public async addPlugin(authority: string): Promise<boolean> {
-    const padlock = new Padlock(authority);
+  // TODO: Add full communication with the station.
+  public addPlugin(publicKey: string): boolean {
+    const padlock = new Padlock(publicKey);
+    const address = padlock.address;
 
-    const challenge = Array.from({ length: 32 }, () => Math.random().toString(36).substring(2)).join("");
-    let locked_challenge = await padlock.lock(challenge);
+    const challenge: string = Array.from({ length: 32 }, () => Math.random().toString(36).substring(2)).join("");
+    const challenge_locked = padlock.lock(challenge);
 
-    // Get the verified test from the station
-    // and verify it. If it's verified, then
-    // we can add the plugin.
+    const context_id = next_obfuscated_id();
+    this.message_context.set(context_id, {
+      type: "plugin_verify",
+      data: { challenge }
+    });
 
-    // For now, we'll just assume it's verified.
-    locked_challenge = challenge;
-    const verified = await padlock.verify(locked_challenge);
-    if (verified) {
-      this.padlocks.set(authority, padlock);
-      return true;
-    }
+    this.sendStationMessage({
+      type: "plugin_verify",
+      dst: `PLUGIN:${address}`,
+      src: this.client_id,
+      context: context_id,
+      data: {
+        challenge: challenge_locked
+      }
+    });
 
-    return false;
+    this.padlocks.set(address, padlock);
+    return true;
   }
 }
 

@@ -12,4 +12,4 @@ interface Message {
   data: any;
 }
 
-export type { Message };
+export type { Message, MessageType };
