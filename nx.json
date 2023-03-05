@@ -14,7 +14,7 @@
   "targetDefaults": {
     "build": {
       "dependsOn": [
-        "^build", "lint", "test:ts"
+        "^build", "lint"
       ],
       "outputs": [
         "{projectRoot}/dist"
@@ -27,7 +27,7 @@
     },
     "test:ts": {
       "dependsOn": [
-        "^test:ts"
+        "^test:ts", "build"
       ]
     }
   },
