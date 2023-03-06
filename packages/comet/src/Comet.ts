@@ -1,5 +1,6 @@
 import { Client } from "discord.js";
 import WebSocket from "ws";
+import { EventEmitter, once } from "events";
 
 import {
   DualSet, Message,
@@ -24,8 +25,10 @@ class Comet {
   private client: Client;
   // The client ID from the station
   private client_id = "";
-  // The station websocket connection
   private station_conn: WebSocket | null = null;
+
+  // EventEmitter for BotComet communication
+  private eventAsyncer = new EventEmitter();
 
   // Sets of obfuscated IDs. Only the comet knows what
   // the real IDs are.
@@ -145,6 +148,24 @@ class Comet {
       this.client_id = message.dst;
     } break;
 
+    case "plugin_verify_response": {
+      // Did I request this plugin?
+      if (!this.message_context.has(message.context)) {
+        console.error("Plugin verify response context not found!");
+        return;
+      }
+
+      // Is the context correct?
+      const context = this.message_context.get(message.context)!;
+      if (context.type !== "plugin_verify") {
+        console.error("Plugin verify response context type mismatch!");
+        return;
+      }
+
+      // Emit an event to indicate a plugin response
+      this.eventAsyncer.emit(`plugin_verify_response_${message.context}`, message);
+    } break;
+
     }
   }
 
@@ -169,8 +190,7 @@ class Comet {
    * @param publicKey The public key of the plugin
    * @returns True if the plugin was added successfully
    */
-  public addPlugin(publicKey: string): boolean {
-    // TODO: Finish this function.
+  public async addPlugin(publicKey: string): Promise<boolean> {
     const padlock = new Padlock(publicKey);
     const address = padlock.address;
 
@@ -193,7 +213,14 @@ class Comet {
       }
     });
 
-    // This never checks for a response.
+    // Wait for the plugin to respond.
+    const [response] = await once(this.eventAsyncer, `plugin_verify_response_${context_id}`) as [Message];
+    if (padlock.verify(response.data.challenge)) {
+      console.log("Plugin verified!");
+    } else {
+      console.error("Plugin verification failed!");
+      return false;
+    }
 
     this.padlocks.set(address, padlock);
     return true;
