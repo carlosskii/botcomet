@@ -1,0 +1,21 @@
+{
+  "name": "botcomet-official-tests",
+  "type": "module",
+  "private": true,
+  "version": "0.1.0",
+  "description": "The official BotComet tests",
+  "scripts": {
+    "lint": "eslint .",
+    "test": "node basic_conn.js"
+  },
+  "author": "The BotComet Team",
+  "license": "MIT",
+  "dependencies": {
+    "@botcomet/comet": "^0.0.1",
+    "@botcomet/plugin": "^0.0.1",
+    "@botcomet/station": "^0.0.1"
+  },
+  "devDependencies": {
+    "eslint": "^8.35.0"
+  }
+}

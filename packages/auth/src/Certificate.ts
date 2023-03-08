@@ -59,7 +59,7 @@ class Certificate {
    */
   public unlock(challenge: string): string {
     const data = this.privateKey.decrypt(challenge, "utf8");
-    return this.privateKey.encrypt(data, "base64");
+    return this.privateKey.encryptPrivate(data, "base64");
   }
 }
 

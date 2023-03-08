@@ -64,7 +64,7 @@ class Padlock {
    */
   public verify(unlock: string): boolean {
     if (!this.lastChallenge) return false;
-    return this.publicKey.decrypt(unlock, "utf8") === this.lastChallenge;
+    return this.publicKey.decryptPublic(unlock, "utf8") === this.lastChallenge;
   }
 
 }

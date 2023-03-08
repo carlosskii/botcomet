@@ -64,7 +64,7 @@ class Comet {
     if (this.client_id == "") throw new Error("Client ID is not negotiated! You must complete beginStationConnection() before calling start().");
 
     this.client.on("ready", () => {
-      console.log("Ready!");
+      console.log("[COMET] Discord client ready");
     });
 
     // Example event handler. This will send a message
@@ -98,7 +98,7 @@ class Comet {
   public beginStationConnection() {
     this.station_conn = new WebSocket(STATION_ADDRESS);
     this.station_conn.on("open", () => {
-      console.log("Connected to station!");
+      console.log("[COMET] Opened station WebSocket");
 
       // Send a comet_connect message to the station.
       const context_id = next_obfuscated_id();
@@ -106,7 +106,8 @@ class Comet {
         type: "comet_connect",
         data: {}
       });
-  
+
+      console.log("[COMET] Requesting station ID...");
       this.sendStationMessage({
         type: "comet_connect",
         dst: "STATION",
@@ -118,7 +119,7 @@ class Comet {
 
     // TODO: Add error handling/comet shutdown.
     this.station_conn.on("close", () => {
-      console.log("Disconnected from station!");
+      console.log("[COMET] Disconnected from station");
     });
 
     this.station_conn.on("message", (data) => {
@@ -133,33 +134,35 @@ class Comet {
     case "comet_connect_response": {
       // Check that the context is valid.
       if (!this.message_context.has(message.context)) {
-        console.error("Comet connect response context not found!");
+        console.error("[COMET] Connect response context not found!");
         return;
       }
 
       // Check that the context is correct.
       const context = this.message_context.get(message.context)!;
       if (context.type !== "comet_connect") {
-        console.error("Comet connect response context type mismatch!");
+        console.error("[COMET] Connect response context type mismatch!");
         return;
       }
 
       // Save the client ID (it's stored in the destination field)
       this.message_context.delete(message.context);
       this.client_id = message.dst;
+
+      console.log("[COMET] Station ID received!");
     } break;
 
     case "plugin_verify_response": {
       // Did I request this plugin?
       if (!this.message_context.has(message.context)) {
-        console.error("Plugin verify response context not found!");
+        console.error("[COMET] Plugin verify response context not found!");
         return;
       }
 
       // Is the context correct?
       const context = this.message_context.get(message.context)!;
       if (context.type !== "plugin_verify") {
-        console.error("Plugin verify response context type mismatch!");
+        console.error("[COMET] Plugin verify response context type mismatch!");
         return;
       }
 
@@ -174,7 +177,7 @@ class Comet {
     if (!this.station_conn) {
       // The station connection should always be open
       // if this function is called.
-      throw new Error("Station connection not open! [IMPOSSIBLE ERROR]");
+      throw new Error("[COMET] Station connection not open! [IMPOSSIBLE ERROR]");
     }
 
     this.station_conn?.send(JSON.stringify(message));
@@ -206,7 +209,7 @@ class Comet {
 
     this.sendStationMessage({
       type: "plugin_verify",
-      dst: `PLUGIN:${address}`,
+      dst: `${address}`,
       src: this.client_id,
       context: context_id,
       data: {
@@ -217,14 +220,18 @@ class Comet {
     // Wait for the plugin to respond.
     const [response] = await once(this.eventAsyncer, `plugin_verify_response_${context_id}`) as [Message];
     if (padlock.verify(response.data.challenge)) {
-      console.log("Plugin verified!");
+      console.log("[COMET] Plugin verified!");
     } else {
-      console.error("Plugin verification failed!");
+      console.error("[COMET] Plugin verification failed!");
       return false;
     }
 
     this.padlocks.set(address, padlock);
     return true;
+  }
+
+  public get has_station_connection(): boolean {
+    return this.client_id !== "";
   }
 }
 

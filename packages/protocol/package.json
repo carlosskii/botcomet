@@ -3,12 +3,16 @@
   "version": "0.0.1",
   "type": "module",
   "description": "The BotComet protocol types and functions",
-  "module": "dist/index.js",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js"
+    }
+  },
   "types": "dist/index.d.ts",
   "scripts": {
     "build": "tsc",
     "lint": "eslint src --ext .ts",
-    "test:ts": "tsc --noEmit"
+    "typecheck": "tsc --noEmit"
   },
   "author": "The BotComet Team",
   "license": "MIT",

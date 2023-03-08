@@ -45,8 +45,8 @@ class Plugin {
    */
   public start() {
     this.station_conn = new WebSocket(STATION_ADDRESS);
-    this.station_conn.on("open", this.onOpen);
-    this.station_conn.on("message", (data) => this.onMessage(JSON.parse(data.toString())));
+    this.station_conn.on("open", this.onOpen.bind(this));
+    this.station_conn.on("message", (data) => this.onMessage.bind(this)(JSON.parse(data.toString())));
   }
 
   private onOpen() {
@@ -89,7 +89,7 @@ class Plugin {
         type: "plugin_verify_response",
         dst: data.src,
         src: data.dst,
-        context: "CONTEXT",
+        context: data.context,
         data: { challenge }
       });
     } break;
@@ -118,6 +118,10 @@ class Plugin {
 
   private sendStationMessage(msg: Message) {
     this.station_conn?.send(JSON.stringify(msg));
+  }
+
+  public get has_station_connection() {
+    return this.client_id !== null;
   }
 
 }

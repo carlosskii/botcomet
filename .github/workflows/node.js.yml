@@ -31,5 +31,7 @@ jobs:
       run: lerna run lint
     - name: Attempt build
       run: lerna run build
-    - name: Run typescript check
-      run: lerna run test:ts
+    - name: Do type checks
+      run: lerna run typecheck
+    - name: Run tests
+      run: (cd tests && npm run test)
