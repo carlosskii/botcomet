@@ -11,7 +11,7 @@
   "scripts": {
     "build": "tsc",
     "lint": "eslint src --ext .ts",
-    "test:ts": "tsc --noEmit"
+    "typecheck": "tsc --noEmit"
   },
   "types": "dist/index.d.ts",
   "author": "The BotComet Team",

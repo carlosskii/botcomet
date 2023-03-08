@@ -12,7 +12,7 @@
   "scripts": {
     "build": "tsc",
     "lint": "eslint src --ext .ts",
-    "test:ts": "tsc --noEmit"
+    "typecheck": "tsc --noEmit"
   },
   "author": "The BotComet Team",
   "license": "MIT",

@@ -11,13 +11,14 @@ let comet, plugin;
 
 console.info("Starting station...");
 
-const station = new Station();
+new Station();
 
 console.info("Starting comet...");
 
 comet = new Comet();
 comet.beginStationConnection();
 
+// TODO: Get event from comet/station instead of sleep
 await sleep(3000);
 if (!comet.has_station_connection) {
   console.error("Failed to connect to station.");
