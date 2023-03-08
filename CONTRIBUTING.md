@@ -21,7 +21,7 @@ Thank you for your interest in contributing to the BotComet project! To keep thi
 ## Commit Guidelines
 
 - You don't need long commit names, but please make sure they are descriptive enough to understand what the commit does. "Updated README.md" is fine if you add more info in the pull request, but "Added stuff" is not.
-- Make your commits small. If you are adding a new feature, you will likely need multiple commits. There is no need to squash your commits, as we will squash them when merging the pull request.
+- Make your commits small. If you are adding a new feature, you will likely need multiple commits. There is no need to squash your commits, we can squash them on merge if needed. Smaller commits allows for easier review and reduces the chance of merge conflicts.
 
 ## General Programming Guidelines
 
