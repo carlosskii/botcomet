@@ -61,7 +61,8 @@ class Comet {
    * @param token The Discord bot token
    */
   public async start(token: string) {
-    // TODO: Station connection should be required before connecting to Discord.
+    if (this.client_id == "") throw new Error("Client ID is not negotiated! You must complete beginStationConnection() before calling start().");
+
     this.client.on("ready", () => {
       console.log("Ready!");
     });
@@ -94,7 +95,7 @@ class Comet {
    * comet_connect_response message, which will contain
    * the client ID.
    */
-  private beginStationConnection() {
+  public beginStationConnection() {
     this.station_conn = new WebSocket(STATION_ADDRESS);
     this.station_conn.on("open", () => {
       console.log("Connected to station!");
