@@ -23,8 +23,8 @@ jobs:
       with:
         node-version: ${{ matrix.node-version }}
         cache: 'npm'
-    - name: Install Lerna
-      run: npm i
+    - name: Install package-lock
+      run: npm ci
     - name: Install dependencies
       run: lerna bootstrap
     - name: Run lint tests
