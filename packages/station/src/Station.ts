@@ -19,13 +19,16 @@ class Station {
 
   constructor() {
     this.wss = new WebSocketServer({ port: 8080 });
-    this.wss.on("connection", this.onConnection);
+    this.wss.on("connection", this.onConnection.bind(this));
   }
 
   // Handles a new connection.
   private onConnection(ws: WebSocket) {
+    console.log("[STATION] New connection");
+
     ws.on("message", (message: string) => {
-      this.onMessage(message, ws);
+      console.log("[STATION] Message received");
+      this.onMessage.bind(this)(message, ws);
     });
 
     ws.on("close", () => {
@@ -43,6 +46,7 @@ class Station {
     switch (msg.type) {
 
     case "comet_connect": {
+      console.log("[STATION] Comet connected, assigning ID");
       const comet_id = next_obfuscated_id();
       this.comets.Set(ws, comet_id);
       ws.send(JSON.stringify({
@@ -55,6 +59,7 @@ class Station {
     } break;
 
     case "plugin_connect": {
+      console.log("[STATION] Plugin connected, assigning ID");
       const plugin_id = next_obfuscated_id();
 
       this.plugins.Set(ws, plugin_id);
@@ -67,6 +72,44 @@ class Station {
         context: msg.context,
         data: {}
       }));
+    } break;
+
+    case "plugin_verify": {
+      console.log("[STATION] Plugin verification request");
+      if (!this.plugin_addresses.HasFirst(msg.dst)) {
+        console.log("[STATION] Plugin not found");
+        // TODO: Add error handling over socket.
+        return;
+      }
+
+      const plugin_id = this.plugin_addresses.GetSecond(msg.dst)!;
+      const plugin_ws = this.plugins.GetFirst(plugin_id);
+
+      if (plugin_ws === undefined) {
+        console.log("[STATION] Plugin not found");
+        // TODO: Add error handling over socket.
+        return;
+      }
+
+      plugin_ws.send(message);
+    } break;
+
+    case "plugin_verify_response": {
+      console.log("[STATION] Plugin verification response");
+      if (!this.comets.HasSecond(msg.dst)) {
+        console.log("[STATION] Comet not found");
+        // You know the drill, add error handling.
+        return;
+      }
+
+      const comet_ws = this.comets.GetFirst(msg.dst);
+      if (comet_ws === undefined) {
+        console.log("[STATION] Comet not found");
+        // You know the drill, add error handling.
+        return;
+      }
+
+      comet_ws.send(message);
     } break;
 
     default:

@@ -3,12 +3,16 @@
   "version": "0.0.1",
   "description": "The BotComet Plugin implementation",
   "type": "module",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js"
+    }
+  },
   "scripts": {
     "build": "tsc",
     "lint": "eslint src --ext .ts",
     "test:ts": "tsc --noEmit"
   },
-  "module": "dist/index.js",
   "types": "dist/index.d.ts",
   "author": "The BotComet Team",
   "license": "MIT",

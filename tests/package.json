@@ -6,7 +6,7 @@
   "description": "The official BotComet tests",
   "scripts": {
     "lint": "eslint .",
-    "test": "jest"
+    "test": "node basic_conn.js"
   },
   "author": "The BotComet Team",
   "license": "MIT",
@@ -16,7 +16,6 @@
     "@botcomet/station": "^0.0.1"
   },
   "devDependencies": {
-    "eslint": "^8.35.0",
-    "jest": "^29.5.0"
+    "eslint": "^8.35.0"
   }
 }
