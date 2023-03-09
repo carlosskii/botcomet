@@ -1,0 +1,17 @@
+{
+  "name": "@botcomet/adapter",
+  "version": "0.1.0",
+  "description": "Generic BotComet Comet Adapter",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "The BotComet Team",
+  "license": "MIT",
+  "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^5.54.1",
+    "@typescript-eslint/parser": "^5.54.1",
+    "eslint": "^8.35.0",
+    "typescript": "^4.9.5"
+  }
+}
