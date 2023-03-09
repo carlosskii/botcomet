@@ -2,9 +2,17 @@
   "name": "@botcomet/adapter",
   "version": "0.1.0",
   "description": "Generic BotComet Comet Adapter",
-  "main": "index.js",
+  "type": "module",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js"
+    }
+  },
+  "types": "./dist/index.d.ts",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "tsc",
+    "lint": "eslint src --ext .ts",
+    "typecheck": "tsc --noEmit"
   },
   "author": "The BotComet Team",
   "license": "MIT",

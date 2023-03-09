@@ -7,6 +7,7 @@ import {
   next_obfuscated_id
 } from "@botcomet/protocol";
 import { Padlock } from "@botcomet/auth";
+import { Adapter } from "@botcomet/adapter";
 
 // TODO: Remove this, set the address in the config file.
 const STATION_ADDRESS = "ws://localhost:8080";
@@ -14,16 +15,19 @@ const STATION_ADDRESS = "ws://localhost:8080";
 
 /**
  * The comet is the main class for a Discord bot. It
- * connects to Discord and the station, and handles
- * all communication between the two. Stations are
- * responsible for handling all communication with
- * plugins.
+ * connects to the station, and handles
+ * all communication with chat APIs using adapters.
+ * Stations are responsible for handling all communication
+ * with plugins.
  */
 class Comet {
-  // The Discord client
   // The client ID from the station
   private client_id = "";
   private station_conn: WebSocket | null = null;
+
+  // The adapters
+  private adapters: Map<string, Adapter> = new Map();
+  private current_adapter: Adapter | null = null;
 
   // EventEmitter for BotComet communication
   private eventAsyncer = new EventEmitter();
@@ -76,6 +80,30 @@ class Comet {
       const message = JSON.parse(data.toString());
       this.evaluateStationMessage(message);
     });
+  }
+
+  /**
+   * Loads an adapter. This will add the adapter to the
+   * list of adapters, and set the current adapter to
+   * the one that was just added.
+   * @param adapter The adapter to load
+   * @param name The name of the adapter
+   * @returns True if the adapter was loaded successfully
+   */
+  public loadAdapter(adapter: Adapter, name: string) {
+    // Check if the adapter is already loaded
+    if (this.adapters.has(name)) {
+      console.error(`[COMET] Adapter ${name} is already loaded!`);
+      return false;
+    }
+
+    // Add the adapter to the list of adapters
+    this.adapters.set(name, adapter);
+
+    // Set the current adapter to the one that was just added
+    this.current_adapter = adapter;
+
+    return true;
   }
 
   private evaluateStationMessage(message: Message) {
