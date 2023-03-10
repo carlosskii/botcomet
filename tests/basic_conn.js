@@ -16,7 +16,7 @@ new Station();
 console.info("Starting comet...");
 
 comet = new Comet();
-comet.beginStationConnection();
+comet.start();
 
 // TODO: Get event from comet/station instead of sleep
 await sleep(3000);

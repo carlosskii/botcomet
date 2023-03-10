@@ -18,15 +18,16 @@
   "author": "The BotComet Team",
   "license": "MIT",
   "devDependencies": {
+    "@types/ws": "^8.5.4",
     "@typescript-eslint/eslint-plugin": "^5.53.0",
     "@typescript-eslint/parser": "^5.53.0",
     "eslint": "^8.34.0",
     "typescript": "^4.9.5"
   },
   "dependencies": {
+    "@botcomet/adapter": "^0.1.0",
     "@botcomet/auth": "^0.0.1",
     "@botcomet/protocol": "^0.0.1",
-    "discord.js": "^14.7.1",
     "ws": "^8.12.1"
   }
 }

@@ -1,13 +1,13 @@
-import { Client } from "discord.js";
 import WebSocket from "ws";
-import { EventEmitter, once } from "events";
+import { EventEmitter, once, on } from "events";
 
 import {
-  DualSet, Message,
+  Message,
   ContextCache,
   next_obfuscated_id
 } from "@botcomet/protocol";
 import { Padlock } from "@botcomet/auth";
+import { Adapter } from "@botcomet/adapter";
 
 // TODO: Remove this, set the address in the config file.
 const STATION_ADDRESS = "ws://localhost:8080";
@@ -15,27 +15,22 @@ const STATION_ADDRESS = "ws://localhost:8080";
 
 /**
  * The comet is the main class for a Discord bot. It
- * connects to Discord and the station, and handles
- * all communication between the two. Stations are
- * responsible for handling all communication with
- * plugins.
+ * connects to the station, and handles
+ * all communication with chat APIs using adapters.
+ * Stations are responsible for handling all communication
+ * with plugins.
  */
 class Comet {
-  // The Discord client
-  private client: Client;
   // The client ID from the station
   private client_id = "";
   private station_conn: WebSocket | null = null;
 
+  // The adapters
+  private adapters: Map<string, Adapter> = new Map();
+  private current_adapter: Adapter | null = null;
+
   // EventEmitter for BotComet communication
   private eventAsyncer = new EventEmitter();
-
-  // Sets of obfuscated IDs. Only the comet knows what
-  // the real IDs are.
-  private station_guilds: DualSet<string, string> = new DualSet();
-  private station_channels: DualSet<string, string> = new DualSet();
-  private station_users: DualSet<string, string> = new DualSet();
-  private station_messages: DualSet<string, string> = new DualSet();
 
   // The context cache for messages. This holds persistent
   // data between messages, and is used to relate messages
@@ -47,47 +42,6 @@ class Comet {
   // to verify the plugin.
   private padlocks: Map<string, Padlock> = new Map();
 
-  constructor() {
-    // TODO: Add Discord client configuration, possibly from a config file.
-    this.client = new Client({
-      intents: []
-    });
-  }
-
-  /**
-   * Starts the comet. This will connect to Discord and
-   * the station, and begin listening for messages on
-   * both.
-   * @param token The Discord bot token
-   */
-  public async start(token: string) {
-    if (this.client_id == "") throw new Error("Client ID is not negotiated! You must complete beginStationConnection() before calling start().");
-
-    this.client.on("ready", () => {
-      console.log("[COMET] Discord client ready");
-    });
-
-    // Example event handler. This will send a message
-    // to the station when a message is sent in a guild
-    // channel.
-    this.client.on("messageCreate", async (message) => {
-      const obfuscated_id = next_obfuscated_id();
-      this.station_messages.Set(obfuscated_id, message.id);
-      this.sendStationMessage({
-        type: "message_create",
-        dst: "STATION",
-        src: this.client_id,
-        context: "CONTEXT",
-        data: {
-          id: obfuscated_id,
-          content: message.content
-        }
-      });
-    });
-
-    this.client.login(token);
-  }
-
   /**
    * Connects to the station. This will open a websocket
    * connection, and send a comet_connect message to
@@ -95,7 +49,7 @@ class Comet {
    * comet_connect_response message, which will contain
    * the client ID.
    */
-  public beginStationConnection() {
+  public start() {
     this.station_conn = new WebSocket(STATION_ADDRESS);
     this.station_conn.on("open", () => {
       console.log("[COMET] Opened station WebSocket");
@@ -126,6 +80,33 @@ class Comet {
       const message = JSON.parse(data.toString());
       this.evaluateStationMessage(message);
     });
+  }
+
+  /**
+   * Loads an adapter. This will add the adapter to the
+   * list of adapters, and set the current adapter to
+   * the one that was just added.
+   * @param adapter The adapter to load
+   * @param name The name of the adapter
+   * @returns True if the adapter was loaded successfully
+   */
+  public loadAdapter(adapter: Adapter, name: string) {
+    // Check if the adapter is already loaded
+    if (this.adapters.has(name)) {
+      console.error(`[COMET] Adapter ${name} is already loaded!`);
+      return false;
+    }
+
+    // Add the adapter to the list of adapters
+    this.adapters.set(name, adapter);
+
+    // Set the current adapter to the one that was just added
+    this.current_adapter = adapter;
+
+    // Add adapter event listeners
+    this.current_adapter.events.addListener("__comet_bubbleup", this.processAdapterEvent.bind(this));
+
+    return true;
   }
 
   private evaluateStationMessage(message: Message) {
@@ -168,6 +149,11 @@ class Comet {
 
       // Emit an event to indicate a plugin response
       this.eventAsyncer.emit(`plugin_verify_response_${message.context}`, message);
+    } break;
+
+    case "adapter_event_response": {
+      // TODO: Save adapter context ID in Comet for verification
+      this.current_adapter?.fire("__comet_bubbledown", message);
     } break;
 
     }
@@ -228,6 +214,33 @@ class Comet {
 
     this.padlocks.set(address, padlock);
     return true;
+  }
+
+  private processAdapterEvent(message: Message) {
+    // Check for proper typing
+    if (message.type != "adapter_event") {
+      console.error("[COMET] Adapter event type mismatch!");
+      return;
+    }
+
+    // Check for proper source
+    if (message.src != "ADAPTER" || message.dst != "COMET") {
+      console.error("[COMET] Adapter event source mismatch!");
+      return;
+    }
+
+    // Modify message accordingly
+    // TODO: Fix dst
+    const new_message: Message = {
+      type: "adapter_event",
+      src: this.client_id,
+      dst: "ALL_PLUGINS",
+      context: message.context,
+      data: message.data
+    };
+
+    // Send the message to the station
+    this.sendStationMessage(new_message);
   }
 
   public get has_station_connection(): boolean {
