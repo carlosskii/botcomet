@@ -1,5 +1,5 @@
 import WebSocket from "ws";
-import { EventEmitter, once } from "events";
+import { EventEmitter, once, on } from "events";
 
 import {
   Message,
@@ -103,6 +103,9 @@ class Comet {
     // Set the current adapter to the one that was just added
     this.current_adapter = adapter;
 
+    // Add adapter event listeners
+    this.current_adapter.events.addListener("__comet_bubbleup", this.processAdapterEvent.bind(this));
+
     return true;
   }
 
@@ -146,6 +149,11 @@ class Comet {
 
       // Emit an event to indicate a plugin response
       this.eventAsyncer.emit(`plugin_verify_response_${message.context}`, message);
+    } break;
+
+    case "adapter_event_response": {
+      // TODO: Save adapter context ID in Comet for verification
+      this.current_adapter?.fire("__comet_bubbledown", message);
     } break;
 
     }
@@ -206,6 +214,33 @@ class Comet {
 
     this.padlocks.set(address, padlock);
     return true;
+  }
+
+  private processAdapterEvent(message: Message) {
+    // Check for proper typing
+    if (message.type != "adapter_event") {
+      console.error("[COMET] Adapter event type mismatch!");
+      return;
+    }
+
+    // Check for proper source
+    if (message.src != "ADAPTER" || message.dst != "COMET") {
+      console.error("[COMET] Adapter event source mismatch!");
+      return;
+    }
+
+    // Modify message accordingly
+    // TODO: Fix dst
+    const new_message: Message = {
+      type: "adapter_event",
+      src: this.client_id,
+      dst: "ALL_PLUGINS",
+      context: message.context,
+      data: message.data
+    };
+
+    // Send the message to the station
+    this.sendStationMessage(new_message);
   }
 
   public get has_station_connection(): boolean {
