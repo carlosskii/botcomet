@@ -1,0 +1,29 @@
+{
+  "name": "@botcomet/adapter-discord",
+  "version": "0.1.0",
+  "description": "The BotComet Discord Adapter",
+  "type": "module",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js"
+    }
+  },
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "lint": "eslint src --ext .ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "author": "The BotComet Team",
+  "license": "MIT",
+  "dependencies": {
+    "@botcomet/adapter": "^0.1.0",
+    "@botcomet/protocol": "^0.0.1",
+    "discord.js": "^14.7.1"
+  },
+  "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^5.54.1",
+    "@typescript-eslint/parser": "^5.54.1",
+    "eslint": "^8.36.0"
+  }
+}

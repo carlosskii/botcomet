@@ -1,5 +1,5 @@
 import WebSocket from "ws";
-import { EventEmitter, once, on } from "events";
+import { EventEmitter, once } from "events";
 
 import {
   Message,
@@ -100,11 +100,19 @@ class Comet {
     // Add the adapter to the list of adapters
     this.adapters.set(name, adapter);
 
+    if (this.current_adapter !== null) {
+      this.current_adapter.events.removeListener("__comet_bubbleup", this.processAdapterEvent.bind(this));
+      this.current_adapter.events.emit("__comet_bubbledown_disable");
+    }
+
     // Set the current adapter to the one that was just added
     this.current_adapter = adapter;
 
     // Add adapter event listeners
     this.current_adapter.events.addListener("__comet_bubbleup", this.processAdapterEvent.bind(this));
+
+    // Start the adapter
+    this.current_adapter.events.emit("__comet_bubbledown_enable");
 
     return true;
   }
