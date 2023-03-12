@@ -18,6 +18,7 @@ class Station {
   private plugin_addresses: DualSet<string, string> = new DualSet();
 
   constructor() {
+    // TODO: Make this configurable.
     this.wss = new WebSocketServer({ port: 8080 });
     this.wss.on("connection", this.onConnection.bind(this));
   }
