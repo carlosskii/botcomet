@@ -2,12 +2,17 @@ import WebSocket from "ws";
 import { EventEmitter, once } from "events";
 
 import {
-  Message,
+  CometConnectMessage, CometConnectResponseMessage,
+  PluginVerifyMessage, PluginVerifyResponseMessage,
+  AdapterEventMessage, AdapterEventResponseMessage,
   ContextCache,
   next_obfuscated_id
 } from "@botcomet/protocol";
 import { Padlock } from "@botcomet/auth";
 import { Adapter } from "@botcomet/adapter";
+
+type ValidCometMessage = CometConnectResponseMessage | PluginVerifyResponseMessage | AdapterEventResponseMessage;
+type ValidCometResponseMessage = CometConnectMessage | PluginVerifyMessage | AdapterEventMessage;
 
 // TODO: Remove this, set the address in the config file.
 const STATION_ADDRESS = "ws://localhost:8080";
@@ -64,8 +69,8 @@ class Comet {
       console.log("[COMET] Requesting station ID...");
       this.sendStationMessage({
         type: "comet_connect",
-        dst: "STATION",
-        src: "CONNECTION",
+        dst: 0,
+        src: 0,
         context: context_id,
         data: {}
       });
@@ -117,57 +122,46 @@ class Comet {
     return true;
   }
 
-  private evaluateStationMessage(message: Message) {
+  private evaluateStationMessage(message: ValidCometMessage) {
     switch (message.type) {
 
-    case "comet_connect_response": {
-      // Check that the context is valid.
-      if (!this.message_context.has(message.context)) {
-        console.error("[COMET] Connect response context not found!");
-        return;
-      }
-
-      // Check that the context is correct.
-      const context = this.message_context.get(message.context)!;
-      if (context.type !== "comet_connect") {
-        console.error("[COMET] Connect response context type mismatch!");
-        return;
-      }
-
-      // Save the client ID (it's stored in the destination field)
-      this.message_context.delete(message.context);
-      this.client_id = message.dst;
-
-      console.log("[COMET] Station ID received!");
-    } break;
-
-    case "plugin_verify_response": {
-      // Did I request this plugin?
-      if (!this.message_context.has(message.context)) {
-        console.error("[COMET] Plugin verify response context not found!");
-        return;
-      }
-
-      // Is the context correct?
-      const context = this.message_context.get(message.context)!;
-      if (context.type !== "plugin_verify") {
-        console.error("[COMET] Plugin verify response context type mismatch!");
-        return;
-      }
-
-      // Emit an event to indicate a plugin response
-      this.eventAsyncer.emit(`plugin_verify_response_${message.context}`, message);
-    } break;
-
-    case "adapter_event_response": {
-      // TODO: Save adapter context ID in Comet for verification
-      this.current_adapter?.fire("__comet_bubbledown", message);
-    } break;
-
+    case "comet_connect_response":
+      this._onCometConnectResponseMessage(message);
+      break;
+    case "plugin_verify_response":
+      this._onPluginVerifyResponseMessage(message);
+      break;
+    case "adapter_event_response":
+      this._onAdapterEventResponseMessage(message);
+      break;
     }
   }
 
-  private sendStationMessage(message: Message) {
+  private _onCometConnectResponseMessage(msg: CometConnectResponseMessage) {
+    // TODO: Add error handling
+    this.client_id = msg.dst;
+  }
+
+  private _onPluginVerifyResponseMessage(msg: PluginVerifyResponseMessage) {
+    if (!this.message_context.has(msg.context)) {
+      console.error("[COMET] Plugin verify response context not found!");
+      return;
+    }
+
+    const context = this.message_context.get(msg.context)!;
+    if (context.type !== "plugin_verify") {
+      console.error("[COMET] Plugin verify response context type mismatch!");
+      return;
+    }
+
+    this.eventAsyncer.emit(`plugin_verify_response_${msg.context}`, msg);
+  }
+
+  private _onAdapterEventResponseMessage(msg: AdapterEventResponseMessage) {
+    this.current_adapter?.fire("__comet_bubbledown", msg);
+  }
+
+  private sendStationMessage(message: ValidCometResponseMessage) {
     if (!this.station_conn) {
       // The station connection should always be open
       // if this function is called.
@@ -212,7 +206,7 @@ class Comet {
     });
 
     // Wait for the plugin to respond.
-    const [response] = await once(this.eventAsyncer, `plugin_verify_response_${context_id}`) as [Message];
+    const [response] = await once(this.eventAsyncer, `plugin_verify_response_${context_id}`) as [PluginVerifyResponseMessage];
     if (padlock.verify(response.data.challenge)) {
       console.log("[COMET] Plugin verified!");
     } else {
@@ -224,7 +218,7 @@ class Comet {
     return true;
   }
 
-  private processAdapterEvent(message: Message) {
+  private processAdapterEvent(message: AdapterEventMessage) {
     // Check for proper typing
     if (message.type != "adapter_event") {
       console.error("[COMET] Adapter event type mismatch!");
@@ -239,7 +233,7 @@ class Comet {
 
     // Modify message accordingly
     // TODO: Fix dst
-    const new_message: Message = {
+    const new_message: AdapterEventMessage = {
       type: "adapter_event",
       src: this.client_id,
       dst: "ALL_PLUGINS",
