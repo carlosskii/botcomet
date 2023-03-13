@@ -1,5 +1,5 @@
 export { default as DualSet } from "./DualSet.js";
-export type { Message } from "./Message.js";
+export * from "./Message.js";
 export type { Context, ContextCache } from "./Context.js";
 
 function next_obfuscated_id(): string {

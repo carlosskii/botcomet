@@ -1,6 +1,14 @@
 import WebSocket, { WebSocketServer } from "ws";
+import { EventEmitter } from "events";
 
-import { Message, DualSet, next_obfuscated_id } from "@botcomet/protocol";
+
+import { 
+  DualSet, next_obfuscated_id,
+  CometConnectMessage, PluginConnectMessage,
+  PluginVerifyMessage, PluginVerifyResponseMessage
+} from "@botcomet/protocol";
+
+type ValidStationMessage = CometConnectMessage | PluginConnectMessage | PluginVerifyMessage | PluginVerifyResponseMessage;
 
 /**
  * The station handles all traffic between comets
@@ -9,6 +17,7 @@ import { Message, DualSet, next_obfuscated_id } from "@botcomet/protocol";
  */
 class Station {
   private readonly wss: WebSocketServer;
+  private eventAsyncer: EventEmitter = new EventEmitter();
 
   // Obfuscated IDs for the comets and plugins. No
   // real IDs exist, but messages need a destination
@@ -18,8 +27,14 @@ class Station {
   private plugin_addresses: DualSet<string, string> = new DualSet();
 
   constructor() {
+    // TODO: Make this configurable.
     this.wss = new WebSocketServer({ port: 8080 });
     this.wss.on("connection", this.onConnection.bind(this));
+
+    this.eventAsyncer.addListener("comet_connect", this._onCometConnectMessage.bind(this));
+    this.eventAsyncer.addListener("plugin_connect", this._onPluginConnectMessage.bind(this));
+    this.eventAsyncer.addListener("plugin_verify", this._onPluginVerifyMessage.bind(this));
+    this.eventAsyncer.addListener("plugin_verify_response", this._onPluginVerifyResponseMessage.bind(this));
   }
 
   // Handles a new connection.
@@ -40,81 +55,85 @@ class Station {
     });
   }
 
+  private _onCometConnectMessage(msg: CometConnectMessage, ws: WebSocket) {
+    console.log("[STATION] Comet connected, assigning ID");
+    const comet_id = next_obfuscated_id();
+    this.comets.Set(ws, comet_id);
+    ws.send(JSON.stringify({
+      type: "comet_connect_response",
+      dst: comet_id,
+      src: 0,
+      context: msg.context,
+      data: {}
+    }));
+  }
+
+  private _onPluginConnectMessage(msg: PluginConnectMessage, ws: WebSocket) {
+    console.log("[STATION] Plugin connected, assigning ID");
+    const plugin_id = next_obfuscated_id();
+    this.plugins.Set(ws, plugin_id);
+    this.plugin_addresses.Set(msg.data.address, plugin_id);
+    ws.send(JSON.stringify({
+      type: "plugin_connect_response",
+      dst: plugin_id,
+      src: 0,
+      context: msg.context,
+      data: {}
+    }));
+  }
+
+  private _onPluginVerifyMessage(msg: PluginVerifyMessage, ws: WebSocket) {
+    console.log("[STATION] Plugin verification request");
+    // TODO: Add proper address parsing (PLUGIN:ADDRESS).
+    if (!this.plugin_addresses.HasFirst(msg.dst)) {
+      console.log("[STATION] Plugin not found");
+    }
+
+    const plugin_id = this.plugin_addresses.GetSecond(msg.dst);
+    // TODO: Add proper undefined handling.
+    const plugin_ws = this.plugins.GetFirst(plugin_id!)!;
+
+    plugin_ws.send(JSON.stringify({
+      type: "plugin_verify",
+      src: msg.src,
+      dst: plugin_id,
+      context: msg.context,
+      data: {
+        challenge: msg.data.challenge
+      }
+    }));
+  }
+
+  private _onPluginVerifyResponseMessage(msg: PluginVerifyResponseMessage) {
+    console.log("[STATION] Plugin verification response");
+
+    if (!this.comets.HasSecond(msg.dst)) {
+      console.log("[STATION] Comet not found");
+    }
+
+    const comet_ws = this.comets.GetFirst(msg.dst);
+
+    comet_ws!.send(JSON.stringify(msg));
+  }
+
   // Handles a message from a comet or plugin.
   private onMessage(message: string, ws: WebSocket) {
-    const msg: Message = JSON.parse(message);
+    const msg: ValidStationMessage = JSON.parse(message);
     switch (msg.type) {
-
-    case "comet_connect": {
-      console.log("[STATION] Comet connected, assigning ID");
-      const comet_id = next_obfuscated_id();
-      this.comets.Set(ws, comet_id);
-      ws.send(JSON.stringify({
-        type: "comet_connect_response",
-        dst: comet_id,
-        src: "STATION",
-        context: msg.context,
-        data: {}
-      }));
-    } break;
-
-    case "plugin_connect": {
-      console.log("[STATION] Plugin connected, assigning ID");
-      const plugin_id = next_obfuscated_id();
-
-      this.plugins.Set(ws, plugin_id);
-      this.plugin_addresses.Set(msg.data.address, plugin_id);
-
-      ws.send(JSON.stringify({
-        type: "plugin_connect_response",
-        dst: plugin_id,
-        src: "STATION",
-        context: msg.context,
-        data: {}
-      }));
-    } break;
-
-    case "plugin_verify": {
-      console.log("[STATION] Plugin verification request");
-      if (!this.plugin_addresses.HasFirst(msg.dst)) {
-        console.log("[STATION] Plugin not found");
-        // TODO: Add error handling over socket.
-        return;
-      }
-
-      const plugin_id = this.plugin_addresses.GetSecond(msg.dst)!;
-      const plugin_ws = this.plugins.GetFirst(plugin_id);
-
-      if (plugin_ws === undefined) {
-        console.log("[STATION] Plugin not found");
-        // TODO: Add error handling over socket.
-        return;
-      }
-
-      plugin_ws.send(message);
-    } break;
-
-    case "plugin_verify_response": {
-      console.log("[STATION] Plugin verification response");
-      if (!this.comets.HasSecond(msg.dst)) {
-        console.log("[STATION] Comet not found");
-        // You know the drill, add error handling.
-        return;
-      }
-
-      const comet_ws = this.comets.GetFirst(msg.dst);
-      if (comet_ws === undefined) {
-        console.log("[STATION] Comet not found");
-        // You know the drill, add error handling.
-        return;
-      }
-
-      comet_ws.send(message);
-    } break;
-
-    default:
-      // Error
+    case "comet_connect":
+      this.eventAsyncer.emit("comet_connect", msg, ws);
       break;
+    case "plugin_connect":
+      this.eventAsyncer.emit("plugin_connect", msg, ws);
+      break;
+    case "plugin_verify":
+      this.eventAsyncer.emit("plugin_verify", msg, ws);
+      break;
+    case "plugin_verify_response":
+      this.eventAsyncer.emit("plugin_verify_response", msg);
+      break;
+    default:
+      console.log("[STATION] Unknown message type");
     }
   }
 }

@@ -1,6 +1,8 @@
 import { EventEmitter } from "events";
 
-import { Message } from "@botcomet/protocol";
+import {
+  AdapterEventMessage, AdapterEventResponseMessage
+} from "@botcomet/protocol";
 
 /**
  * Adapters are used with Comets to provide API
@@ -24,7 +26,7 @@ export class Adapter {
         event,
         args
       }
-    } as Message);
+    } as AdapterEventMessage);
   }
 }
 
