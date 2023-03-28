@@ -14,9 +14,6 @@ import { Adapter } from "@botcomet/adapter";
 type ValidCometMessage = CometConnectResponseMessage | PluginVerifyResponseMessage | AdapterEventResponseMessage;
 type ValidCometResponseMessage = CometConnectMessage | PluginVerifyMessage | AdapterEventMessage;
 
-// TODO: Remove this, set the address in the config file.
-const STATION_ADDRESS = "ws://localhost:8080";
-
 
 /**
  * The comet is the main class for a Discord bot. It
@@ -54,8 +51,8 @@ class Comet {
    * comet_connect_response message, which will contain
    * the client ID.
    */
-  public start() {
-    this.station_conn = new WebSocket(STATION_ADDRESS);
+  public start(address: string) {
+    this.station_conn = new WebSocket(address);
     this.station_conn.on("open", () => {
       console.log("[COMET] Opened station WebSocket");
 
@@ -232,17 +229,21 @@ class Comet {
     }
 
     // Modify message accordingly
-    // TODO: Fix dst
+    // TODO: Add proper plugin selection
     const new_message: AdapterEventMessage = {
       type: "adapter_event",
+      dst: "",
       src: this.client_id,
-      dst: "ALL_PLUGINS",
       context: message.context,
       data: message.data
     };
 
-    // Send the message to the station
-    this.sendStationMessage(new_message);
+    // Send the message to all plugins
+    // TODO: Get real address from plugin
+    for (const [address, padlock] of this.padlocks) {
+      new_message.dst = address;
+      this.sendStationMessage(new_message);
+    }
   }
 
   public get has_station_connection(): boolean {

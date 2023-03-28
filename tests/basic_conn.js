@@ -16,7 +16,7 @@ new Station();
 console.info("Starting comet...");
 
 comet = new Comet();
-comet.start();
+comet.start("ws://localhost:6197");
 
 // TODO: Get event from comet/station instead of sleep
 await sleep(3000);
@@ -31,7 +31,7 @@ const publicKey = readFileSync("example_plugin.pub", "utf8");
 const privateKey = readFileSync("example_plugin.pem", "utf8");
 
 plugin = new Plugin(publicKey, privateKey);
-plugin.start();
+plugin.start("ws://localhost:6197");
 
 await sleep(3000);
 if (!plugin.has_station_connection) {

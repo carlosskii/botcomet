@@ -13,9 +13,10 @@ export class Adapter {
 
   constructor() {
     this.events = new EventEmitter();
+    this.events.addListener("__comet_bubbledown", this._onCometBubbleDown.bind(this));
   }
 
-  public fire(event: string, ...args: any[]) {
+  public fire(event: string, data: object) {
     // TODO: Add proper context tracking
     this.events.emit("__comet_bubbleup", {
       type: "adapter_event",
@@ -24,9 +25,13 @@ export class Adapter {
       context: "ADAPTER",
       data: {
         event,
-        args
+        data
       }
     } as AdapterEventMessage);
+  }
+
+  private _onCometBubbleDown(message: AdapterEventResponseMessage) {
+    this.events.emit(message.data.event, message.data.data);
   }
 }
 

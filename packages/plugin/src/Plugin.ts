@@ -4,15 +4,13 @@ import { EventEmitter } from "events";
 import {
   PluginVerifyMessage, PluginConnectResponseMessage,
   PluginVerifyResponseMessage, PluginConnectMessage,
+  AdapterEventMessage, AdapterEventResponseMessage,
   ContextCache, next_obfuscated_id
 } from "@botcomet/protocol";
 import { Certificate } from "@botcomet/auth";
 
-type ValidPluginMessage = PluginVerifyMessage | PluginConnectResponseMessage;
-type ValidPluginResponseMessage = PluginVerifyResponseMessage | PluginConnectMessage;
-
-// TODO: Add a config file for the station address.
-const STATION_ADDRESS = "ws://localhost:8080";
+type ValidPluginMessage = PluginVerifyMessage | PluginConnectResponseMessage | AdapterEventMessage;
+type ValidPluginResponseMessage = PluginVerifyResponseMessage | PluginConnectMessage | AdapterEventResponseMessage;
 
 /**
  * Plugins handle all functionality for comets. They
@@ -49,13 +47,14 @@ class Plugin {
    * Starts the plugin. This will connect to the station,
    * and begin listening for messages on the station.
    */
-  public start() {
-    this.station_conn = new WebSocket(STATION_ADDRESS);
+  public start(address: string) {
+    this.station_conn = new WebSocket(address);
     this.station_conn.on("open", this.onOpen.bind(this));
     this.station_conn.on("message", (data) => this.onMessage.bind(this)(JSON.parse(data.toString())));
 
     this.eventAsyncer.on("plugin_verify", this._onPluginVerifyMessage.bind(this));
     this.eventAsyncer.on("plugin_connect_response", this._onPluginConnectResponseMessage.bind(this));
+    this.eventAsyncer.on("adapter_event", this._onAdapterEventMessage.bind(this));
   }
 
   private onOpen() {
@@ -113,6 +112,10 @@ class Plugin {
 
     this.message_context.delete(data.context);
     this.client_id = data.dst;
+  }
+
+  private _onAdapterEventMessage(data: AdapterEventMessage) {
+    this.eventAsyncer.emit(data.data.event, data);
   }
 
 

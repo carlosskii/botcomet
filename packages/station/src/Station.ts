@@ -5,10 +5,14 @@ import { EventEmitter } from "events";
 import { 
   DualSet, next_obfuscated_id,
   CometConnectMessage, PluginConnectMessage,
-  PluginVerifyMessage, PluginVerifyResponseMessage
+  PluginVerifyMessage, PluginVerifyResponseMessage,
+  AdapterEventMessage, AdapterEventResponseMessage
 } from "@botcomet/protocol";
 
-type ValidStationMessage = CometConnectMessage | PluginConnectMessage | PluginVerifyMessage | PluginVerifyResponseMessage;
+type ValidStationMessage =
+  CometConnectMessage | PluginConnectMessage |
+  PluginVerifyMessage | PluginVerifyResponseMessage |
+  AdapterEventMessage | AdapterEventResponseMessage;
 
 /**
  * The station handles all traffic between comets
@@ -28,22 +32,24 @@ class Station {
 
   constructor() {
     // TODO: Make this configurable.
-    this.wss = new WebSocketServer({ port: 8080 });
-    this.wss.on("connection", this.onConnection.bind(this));
+    this.wss = new WebSocketServer({ port: 6197 });
+    this.wss.on("connection", this._onConnection.bind(this));
 
     this.eventAsyncer.addListener("comet_connect", this._onCometConnectMessage.bind(this));
     this.eventAsyncer.addListener("plugin_connect", this._onPluginConnectMessage.bind(this));
     this.eventAsyncer.addListener("plugin_verify", this._onPluginVerifyMessage.bind(this));
     this.eventAsyncer.addListener("plugin_verify_response", this._onPluginVerifyResponseMessage.bind(this));
+    this.eventAsyncer.addListener("adapter_event", this._onAdapterEventMessage.bind(this));
+    this.eventAsyncer.addListener("adapter_event_response", this._onAdapterEventResponseMessage.bind(this));
   }
 
   // Handles a new connection.
-  private onConnection(ws: WebSocket) {
+  private _onConnection(ws: WebSocket) {
     console.log("[STATION] New connection");
 
     ws.on("message", (message: string) => {
       console.log("[STATION] Message received");
-      this.onMessage.bind(this)(message, ws);
+      this._onMessage.bind(this)(message, ws);
     });
 
     ws.on("close", () => {
@@ -116,8 +122,32 @@ class Station {
     comet_ws!.send(JSON.stringify(msg));
   }
 
+  private _onAdapterEventMessage(msg: AdapterEventMessage) {
+    console.log("[STATION] Adapter event");
+
+    if (!this.plugins.HasSecond(msg.dst)) {
+      console.log("[STATION] Plugin not found");
+    }
+
+    const plugin_ws = this.plugins.GetFirst(msg.dst);
+
+    plugin_ws!.send(JSON.stringify(msg));
+  }
+
+  private _onAdapterEventResponseMessage(msg: AdapterEventResponseMessage) {
+    console.log("[STATION] Adapter event response");
+
+    if (!this.comets.HasSecond(msg.dst)) {
+      console.log("[STATION] Comet not found");
+    }
+
+    const comet_ws = this.comets.GetFirst(msg.dst);
+
+    comet_ws!.send(JSON.stringify(msg));
+  }
+
   // Handles a message from a comet or plugin.
-  private onMessage(message: string, ws: WebSocket) {
+  private _onMessage(message: string, ws: WebSocket) {
     const msg: ValidStationMessage = JSON.parse(message);
     switch (msg.type) {
     case "comet_connect":
@@ -131,6 +161,12 @@ class Station {
       break;
     case "plugin_verify_response":
       this.eventAsyncer.emit("plugin_verify_response", msg);
+      break;
+    case "adapter_event":
+      this.eventAsyncer.emit("adapter_event", msg);
+      break;
+    case "adapter_event_response":
+      this.eventAsyncer.emit("adapter_event_response", msg);
       break;
     default:
       console.log("[STATION] Unknown message type");
