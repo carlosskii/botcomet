@@ -1,6 +1,6 @@
 {
   "name": "@botcomet/comet",
-  "version": "0.0.1",
+  "version": "0.1.0-alpha.0",
   "type": "module",
   "description": "BotComet's Comet implementation",
   "exports": {
@@ -32,9 +32,9 @@
     "typescript": "^4.9.5"
   },
   "dependencies": {
-    "@botcomet/adapter": "^0.1.0",
-    "@botcomet/auth": "^0.0.1",
-    "@botcomet/protocol": "^0.0.1",
+    "@botcomet/adapter": "^0.1.0-alpha.0",
+    "@botcomet/auth": "^0.1.0-alpha.0",
+    "@botcomet/protocol": "^0.1.0-alpha.0",
     "ws": "^8.12.1"
   }
 }

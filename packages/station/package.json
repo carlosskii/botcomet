@@ -1,7 +1,7 @@
 {
   "name": "@botcomet/station",
   "type": "module",
-  "version": "0.0.1",
+  "version": "0.1.0-alpha.0",
   "description": "The BotComet Station implementation",
   "publishConfig": {
     "access": "public"
@@ -30,7 +30,7 @@
     "typescript": "^4.9.5"
   },
   "dependencies": {
-    "@botcomet/protocol": "^0.0.1",
+    "@botcomet/protocol": "^0.1.0-alpha.0",
     "ws": "^8.12.1"
   }
 }

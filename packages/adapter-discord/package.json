@@ -1,6 +1,6 @@
 {
   "name": "@botcomet/adapter-discord",
-  "version": "0.1.0",
+  "version": "0.1.0-alpha.0",
   "description": "The BotComet Discord Adapter",
   "type": "module",
   "private": true,
@@ -22,8 +22,8 @@
     "url": "https://github.com/botcomet/botcomet.git"
   },
   "dependencies": {
-    "@botcomet/adapter": "^0.1.0",
-    "@botcomet/protocol": "^0.0.1",
+    "@botcomet/adapter": "^0.1.0-alpha.0",
+    "@botcomet/protocol": "^0.1.0-alpha.0",
     "discord.js": "^14.7.1"
   },
   "devDependencies": {
