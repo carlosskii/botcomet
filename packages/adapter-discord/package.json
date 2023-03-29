@@ -23,7 +23,7 @@
   },
   "dependencies": {
     "@botcomet/adapter": "^0.1.0",
-    "@botcomet/protocol": "^0.0.1",
+    "@botcomet/protocol": "^0.1.0",
     "discord.js": "^14.7.1"
   },
   "devDependencies": {

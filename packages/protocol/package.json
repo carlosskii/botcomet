@@ -1,6 +1,6 @@
 {
   "name": "@botcomet/protocol",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "type": "module",
   "description": "The BotComet protocol types and functions",
   "exports": {
