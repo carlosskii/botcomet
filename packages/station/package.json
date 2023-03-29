@@ -3,6 +3,9 @@
   "type": "module",
   "version": "0.0.1",
   "description": "The BotComet Station implementation",
+  "publishConfig": {
+    "access": "public"
+  },
   "exports": {
     ".": {
       "import": "./dist/index.js"
