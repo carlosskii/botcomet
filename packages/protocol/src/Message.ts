@@ -54,7 +54,10 @@ interface AdapterEventMessage {
   src: string;
   dst: string;
   context: string;
-  data: object;
+  data: {
+    event: string;
+    data: object;
+  }
 }
 
 interface AdapterEventResponseMessage {
@@ -62,7 +65,10 @@ interface AdapterEventResponseMessage {
   src: string;
   dst: string;
   context: string;
-  data: object;
+  data: {
+    event: string;
+    data: object;
+  }
 }
 
 interface PluginVerifyResponseMessage {

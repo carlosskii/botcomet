@@ -1,12 +1,15 @@
 {
   "name": "@botcomet/auth",
-  "version": "0.0.1",
+  "version": "0.1.0-alpha.0",
   "type": "module",
   "description": "The BotComet Authentication implementation",
   "exports": {
     ".": {
       "import": "./dist/index.js"
     }
+  },
+  "publishConfig": {
+    "access": "public"
   },
   "scripts": {
     "build": "tsc",
@@ -16,6 +19,10 @@
   "types": "dist/index.d.ts",
   "author": "The BotComet Team",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/botcomet/botcomet.git"
+  },
   "devDependencies": {
     "@types/node-rsa": "^1.1.1",
     "@typescript-eslint/eslint-plugin": "^5.53.0",

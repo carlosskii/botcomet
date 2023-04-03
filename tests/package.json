@@ -11,9 +11,9 @@
   "author": "The BotComet Team",
   "license": "MIT",
   "dependencies": {
-    "@botcomet/comet": "^0.0.1",
-    "@botcomet/plugin": "^0.0.1",
-    "@botcomet/station": "^0.0.1"
+    "@botcomet/comet": "^0.1.0-alpha.0",
+    "@botcomet/plugin": "^0.1.0-alpha.0",
+    "@botcomet/station": "^0.1.0-alpha.0"
   },
   "devDependencies": {
     "eslint": "^8.35.0"

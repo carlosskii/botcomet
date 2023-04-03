@@ -1,12 +1,15 @@
 {
   "name": "@botcomet/adapter",
-  "version": "0.1.0",
+  "version": "0.1.0-alpha.0",
   "description": "Generic BotComet Comet Adapter",
   "type": "module",
   "exports": {
     ".": {
       "import": "./dist/index.js"
     }
+  },
+  "publishConfig": {
+    "access": "public"
   },
   "types": "./dist/index.d.ts",
   "scripts": {
@@ -16,6 +19,11 @@
   },
   "author": "The BotComet Team",
   "license": "MIT",
+  "readme": "README.md",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/botcomet/botcomet.git"
+  },
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "^5.54.1",
     "@typescript-eslint/parser": "^5.54.1",
@@ -23,6 +31,6 @@
     "typescript": "^4.9.5"
   },
   "dependencies": {
-    "@botcomet/protocol": "^0.0.1"
+    "@botcomet/protocol": "^0.1.0-alpha.0"
   }
 }
