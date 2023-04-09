@@ -13,6 +13,9 @@ npm install @botcomet/plugin
 ```js
 import { Plugin } from '@botcomet/plugin';
 
-const plugin = new Plugin(publicKey, privateKey);
-plugin.start("ws://localhost:6197");
+const plugin = new Plugin(publicKey, privateKey, {
+  address: "localhost",
+  port: 6197
+});
+plugin.start();
 ```

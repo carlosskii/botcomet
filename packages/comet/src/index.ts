@@ -1,1 +1,1 @@
-export { default as Comet } from "./Comet.js";
+export { default as Comet, CometConfig } from "./Comet.js";

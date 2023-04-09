@@ -14,6 +14,9 @@ npm install @botcomet/comet
 import { Comet } from '@botcomet/comet';
 
 
-const comet = new Comet();
-comet.start("ws://localhost:6197");
+const comet = new Comet({
+  address: "localhost",
+  port: 6197
+});
+comet.start();
 ```

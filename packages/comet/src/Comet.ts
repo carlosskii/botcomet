@@ -14,6 +14,10 @@ import { Adapter } from "@botcomet/adapter";
 type ValidCometMessage = CometConnectResponseMessage | PluginVerifyResponseMessage | AdapterEventResponseMessage;
 type ValidCometResponseMessage = CometConnectMessage | PluginVerifyMessage | AdapterEventMessage;
 
+export interface CometConfig {
+  address: string;
+  port: number;
+}
 
 /**
  * The comet is the main class for a Discord bot. It
@@ -23,6 +27,8 @@ type ValidCometResponseMessage = CometConnectMessage | PluginVerifyMessage | Ada
  * with plugins.
  */
 class Comet {
+  private config: CometConfig;
+
   // The client ID from the station
   private client_id = "";
   private station_conn: WebSocket | null = null;
@@ -44,6 +50,10 @@ class Comet {
   // to verify the plugin.
   private padlocks: Map<string, Padlock> = new Map();
 
+  constructor(config: CometConfig) {
+    this.config = config;
+  }
+
   /**
    * Connects to the station. This will open a websocket
    * connection, and send a comet_connect message to
@@ -51,8 +61,8 @@ class Comet {
    * comet_connect_response message, which will contain
    * the client ID.
    */
-  public start(address: string) {
-    this.station_conn = new WebSocket(address);
+  public start() {
+    this.station_conn = new WebSocket(`ws://${this.config.address}:${this.config.port}`);
     this.station_conn.on("open", () => {
       console.log("[COMET] Opened station WebSocket");
 

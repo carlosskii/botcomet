@@ -12,6 +12,11 @@ import { Certificate } from "@botcomet/auth";
 type ValidPluginMessage = PluginVerifyMessage | PluginConnectResponseMessage | AdapterEventMessage;
 type ValidPluginResponseMessage = PluginVerifyResponseMessage | PluginConnectMessage | AdapterEventResponseMessage;
 
+export interface PluginConfig {
+  address: string;
+  port: number;
+}
+
 /**
  * Plugins handle all functionality for comets. They
  * receive events from the bot, and emit commands for
@@ -20,6 +25,8 @@ type ValidPluginResponseMessage = PluginVerifyResponseMessage | PluginConnectMes
  * itself. Comets handle all verification of plugins.
  */
 class Plugin {
+  private config: PluginConfig;
+
   // The client ID from the station
   private client_id = "";
   // The plugin address (see @botcomet/auth - Certificate)
@@ -38,7 +45,8 @@ class Plugin {
    * @param publicKey The public key as a PEM string (see \@botcomet/auth - Certificate)
    * @param privateKey The private key as a PEM string (see \@botcomet/auth - Certificate)
    */
-  constructor(publicKey: string, privateKey: string) {
+  constructor(publicKey: string, privateKey: string, config: PluginConfig) {
+    this.config = config;
     this.certificate = new Certificate(publicKey, privateKey);
     this.address = this.certificate.address;
   }
@@ -47,8 +55,8 @@ class Plugin {
    * Starts the plugin. This will connect to the station,
    * and begin listening for messages on the station.
    */
-  public start(address: string) {
-    this.station_conn = new WebSocket(address);
+  public start() {
+    this.station_conn = new WebSocket(`ws://${this.config.address}:${this.config.port}`);
     this.station_conn.on("open", this.onOpen.bind(this));
     this.station_conn.on("message", (data) => this.onMessage.bind(this)(JSON.parse(data.toString())));
 
